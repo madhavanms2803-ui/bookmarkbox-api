@@ -1,0 +1,10 @@
+BookmarkBox API — implementation notes
+
+Completed:
+- src/repositories/bookmarkRepository.js: creates bookmarks through Prisma and lists only the specified user's bookmarks in newest-first order.
+- src/services/authService.js: validates input, normalizes email, rejects duplicate registrations with 409, hashes passwords with bcryptjs, returns only id/name/email, verifies login passwords, and signs one-hour JWTs using JWT_SECRET.
+- Only the two permitted source files were changed. GIVEN files were left unchanged.
+
+Verification status:
+- Source-level verification completed: Prisma calls remain in the bookmark repository; password hashes are not returned; login rejects unknown users and incorrect passwords; the JWT payload uses sub=user.id.
+- End-to-end PostgreSQL verification has NOT been run in this execution environment because it cannot access your local DATABASE_URL. After extracting the ZIP, configure .env, run the migration, and verify register, login, bookmark creation, and bookmark listing using the README curl examples. Record the successful responses here before submitting if your evaluator expects runtime evidence.

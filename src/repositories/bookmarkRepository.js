@@ -7,19 +7,19 @@ const prisma = require('../db/prisma');
 
 // createBookmark({ userId, title, url })
 //   Insert one Bookmark row and return the created bookmark.
-//   Hint: return prisma.bookmark.create({ data: { userId, title, url } });
 async function createBookmark({ userId, title, url }) {
-  // TODO (Task 1a): create and return the bookmark.
+  return prisma.bookmark.create({
+    data: { userId, title, url },
+  });
 }
 
 // listBookmarksByUser(userId)
 //   Return that user's bookmarks, newest first.
-//   Hint: return prisma.bookmark.findMany({
-//            where: { userId },
-//            orderBy: { createdAt: 'desc' },
-//          });
 async function listBookmarksByUser(userId) {
-  // TODO (Task 1b): find and return the user's bookmarks, newest first.
+  return prisma.bookmark.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  });
 }
 
 module.exports = { createBookmark, listBookmarksByUser };

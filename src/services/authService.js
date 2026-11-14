@@ -17,28 +17,79 @@ function publicUser(user) {
 }
 
 // register({ name, email, password })
-//   1) validate name/email/password are non-empty strings
-//        -> else throw new AppError(400, 'INVALID_INPUT', 'name, email, password are required')
-//   2) normalize email:  email = email.trim().toLowerCase()
-//   3) if userRepository.findByEmail(email) exists
-//        -> throw new AppError(409, 'EMAIL_EXISTS', 'Email already registered')
-//   4) hash the password:  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-//   5) create the user via userRepository.create({ name, email, passwordHash })
-//   6) return publicUser(created)   // never return the password or hash
+//   Validates input, prevents duplicate emails, stores only a bcrypt hash,
+//   and returns a password-free public user object.
 async function register(input = {}) {
-  // TODO (Task 2): implement registration with bcrypt hashing.
+  const { name, email, password } = input || {};
+
+  if (
+    typeof name !== 'string' || name.trim().length === 0 ||
+    typeof email !== 'string' || email.trim().length === 0 ||
+    typeof password !== 'string' || password.trim().length === 0
+  ) {
+    throw new AppError(
+      400,
+      'INVALID_INPUT',
+      'name, email, password are required'
+    );
+  }
+
+  const normalizedName = name.trim();
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const existingUser = await userRepository.findByEmail(normalizedEmail);
+  if (existingUser) {
+    throw new AppError(409, 'EMAIL_EXISTS', 'Email already registered');
+  }
+
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  const createdUser = await userRepository.create({
+    name: normalizedName,
+    email: normalizedEmail,
+    passwordHash,
+  });
+
+  return publicUser(createdUser);
 }
 
 // login({ email, password })
-//   1) validate email/password are non-empty strings
-//        -> else throw new AppError(400, 'INVALID_INPUT', 'email and password are required')
-//   2) normalize email, look the user up with userRepository.findByEmail
-//   3) compare:  const ok = user && (await bcrypt.compare(password, user.passwordHash));
-//        if not ok -> throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password')
-//   4) sign a token:  const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '1h' });
-//   5) return { token }
+//   Looks up the normalized email, verifies the password, and issues a JWT.
 async function login(input = {}) {
-  // TODO (Task 3): implement login with bcrypt.compare + jwt.sign.
+  const { email, password } = input || {};
+
+  if (
+    typeof email !== 'string' || email.trim().length === 0 ||
+    typeof password !== 'string' || password.trim().length === 0
+  ) {
+    throw new AppError(
+      400,
+      'INVALID_INPUT',
+      'email and password are required'
+    );
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await userRepository.findByEmail(normalizedEmail);
+
+  const passwordMatches = user
+    ? await bcrypt.compare(password, user.passwordHash)
+    : false;
+
+  if (!passwordMatches) {
+    throw new AppError(
+      401,
+      'INVALID_CREDENTIALS',
+      'Invalid email or password'
+    );
+  }
+
+  const token = jwt.sign(
+    { sub: user.id },
+    JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+
+  return { token };
 }
 
 module.exports = { register, login };
